@@ -20,6 +20,14 @@ import (
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 )
 
+const (
+	PreSchedulerPluginType = "PreSchedule"
+	PostSchedulePluginType = "PostSchedule"
+	FilterPluginType       = "Filter"
+	ScorerPluginType       = "Scorer"
+	PickerPluginType       = "Picker"
+)
+
 type Pod interface {
 	GetPod() *backendmetrics.Pod
 	GetMetrics() *backendmetrics.Metrics

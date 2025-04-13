@@ -20,9 +20,11 @@ package scheduling
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/plugins"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
@@ -111,7 +113,9 @@ func (s *Scheduler) Schedule(ctx context.Context, req *types.LLMRequest) (*types
 		return nil, err
 	}
 
+	before := time.Now()
 	res, err := s.picker.Pick(sCtx, pods)
+	metrics.RecordSchedulerPluginProcessingLatency(types.PickerPluginType, s.picker.Name(), time.Since(before))
 	if err != nil {
 		return nil, err
 	}
@@ -125,14 +129,18 @@ func (s *Scheduler) Schedule(ctx context.Context, req *types.LLMRequest) (*types
 func (s *Scheduler) runPreSchedulePlugins(ctx *types.Context) {
 	for _, plugin := range s.preSchedulePlugins {
 		ctx.Logger.V(logutil.DEBUG).Info("Running pre-schedule plugin", "plugin", plugin.Name())
+		before := time.Now()
 		plugin.PreSchedule(ctx)
+		metrics.RecordSchedulerPluginProcessingLatency(types.PreSchedulerPluginType, plugin.Name(), time.Since(before))
 	}
 }
 
 func (s *Scheduler) runPostSchedulePlugins(ctx *types.Context, res *types.Result) {
 	for _, plugin := range s.postSchedulePlugins {
 		ctx.Logger.V(logutil.DEBUG).Info("Running post-schedule plugin", "plugin", plugin.Name())
+		before := time.Now()
 		plugin.PostSchedule(ctx, res)
+		metrics.RecordSchedulerPluginProcessingLatency(types.PostSchedulePluginType, plugin.Name(), time.Since(before))
 	}
 }
 
@@ -142,7 +150,9 @@ func (s *Scheduler) runFilterPlugins(ctx *types.Context) ([]types.Pod, error) {
 	loggerDebug.Info("Before running filter plugins", "pods", pods)
 	for _, filter := range s.filters {
 		loggerDebug.Info("Running filter plugin", "plugin", filter.Name())
+		before := time.Now()
 		filteredPods, err := filter.Filter(ctx, pods)
+		metrics.RecordSchedulerPluginProcessingLatency(types.FilterPluginType, filter.Name(), time.Since(before))
 		if err != nil || len(filteredPods) == 0 {
 			return nil, fmt.Errorf("failed to apply filter, resulted %v pods, this should never happen: %w", len(filteredPods), err)
 		}
@@ -173,7 +183,9 @@ func runScorersForPod(ctx *types.Context, scorers []types.Scorer, pod types.Pod)
 	score := float64(0)
 	for _, scorer := range scorers {
 		logger.Info("Running scorer", "scorer", scorer.Name())
+		before := time.Now()
 		oneScore, err := scorer.Score(ctx, pod)
+		metrics.RecordSchedulerPluginProcessingLatency(types.ScorerPluginType, scorer.Name(), time.Since(before))
 		if err != nil {
 			logger.Error(err, "Failed to calculate score for scorer", "scorer", scorer.Name())
 			return 0, err
