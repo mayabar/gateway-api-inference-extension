@@ -269,14 +269,6 @@ var DropRequestFilter = &Filter{
 	},
 }
 
-var NoopFilter = &Filter{
-	name: "noop",
-	filter: func(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
-		ctx.Logger.V(logutil.DEBUG).Info("All pods pass")
-		return pods, nil
-	},
-}
-
 // podPredicate is a filter function to check whether a pod is desired.
 type podPredicate func(req *types.LLMRequest, pod types.Pod) bool
 
