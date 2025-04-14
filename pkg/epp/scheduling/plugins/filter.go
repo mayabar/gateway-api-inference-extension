@@ -28,19 +28,19 @@ import (
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 )
 
-type BasicFilter struct {
+type Filter struct {
 	name   string
 	filter filterFunc
 }
 
-func (bf *BasicFilter) Name() string {
+func (bf *Filter) Name() string {
 	if bf == nil {
 		return "nil"
 	}
 	return bf.name
 }
 
-func (bf *BasicFilter) Filter(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
+func (bf *Filter) Filter(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
 	loggerTrace := ctx.Logger.V(logutil.TRACE)
 	loggerTrace.Info("Running a filter", "name", bf.Name(), "podCount", len(pods))
 
@@ -123,7 +123,7 @@ func toFilterFunc(pp podPredicate) filterFunc {
 	}
 }
 
-var LeastQueueFilter = &BasicFilter{
+var LeastQueueFilter = &Filter{
 	name:   "least queuing",
 	filter: leastQueuingFilterFunc,
 }
@@ -157,12 +157,12 @@ func leastQueuingFilterFunc(ctx *types.Context, pods []types.Pod) ([]types.Pod, 
 	return filtered, nil
 }
 
-var LowQueueFilter = &BasicFilter{
+var LowQueueFilter = &Filter{
 	name:   "low queueing filter",
 	filter: toFilterFunc((queueThresholdPredicate(config.Conf.QueueingThresholdLoRA))),
 }
 
-var LeastKVCacheFilter = &BasicFilter{
+var LeastKVCacheFilter = &Filter{
 	name:   "least KV cache percent",
 	filter: leastKVCacheFilterFunc,
 }
@@ -195,7 +195,7 @@ func leastKVCacheFilterFunc(ctx *types.Context, pods []types.Pod) ([]types.Pod, 
 	return filtered, nil
 }
 
-var LoRAAffinityFilter = &BasicFilter{
+var LoRAAffinityFilter = &Filter{
 	name:   "affinity LoRA",
 	filter: loRASoftAffinityFilterFunc,
 }
@@ -254,12 +254,12 @@ func loRASoftAffinityFilterFunc(ctx *types.Context, pods []types.Pod) ([]types.P
 	return filtered_available, nil
 }
 
-var HasCapacityFilter = &BasicFilter{
+var HasCapacityFilter = &Filter{
 	name:   "has capacity for sheddable requests",
 	filter: toFilterFunc(queueThresholdPredicate(config.Conf.QueueThresholdCritical).and(kvCacheThresholdPredicate(config.Conf.KVCacheThreshold))),
 }
 
-var DropRequestFilter = &BasicFilter{
+var DropRequestFilter = &Filter{
 	name: "drop request",
 	filter: func(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
 		ctx.Logger.V(logutil.DEFAULT).Info("Request dropped", "request", ctx.Req)
@@ -269,7 +269,7 @@ var DropRequestFilter = &BasicFilter{
 	},
 }
 
-var NoopFilter = &BasicFilter{
+var NoopFilter = &Filter{
 	name: "noop",
 	filter: func(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
 		ctx.Logger.V(logutil.DEBUG).Info("All pods pass")

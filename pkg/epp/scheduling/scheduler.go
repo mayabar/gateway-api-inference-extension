@@ -70,9 +70,9 @@ func NewScheduler(datastore Datastore) *Scheduler {
 
 	return &Scheduler{
 		datastore:           datastore,
-		preSchedulePlugins:  []types.PreSchedule{defaultPlugin},
-		postSchedulePlugins: []types.PostSchedule{defaultPlugin},
-		scorers:             []types.Scorer{defaultPlugin},
+		preSchedulePlugins:  []types.PreSchedule{},
+		postSchedulePlugins: []types.PostSchedule{},
+		scorers:             []types.Scorer{},
 		filters:             []types.Filter{defaultPlugin},
 		picker:              defaultPlugin,
 	}
@@ -97,7 +97,7 @@ func (s *Scheduler) Schedule(ctx context.Context, req *types.LLMRequest) (*types
 	loggerDebug := logger.V(logutil.DEBUG)
 
 	// Snapshot pod metrics from the datastore to:
-	// 1. Reduce conCurrent access to the datastore.
+	// 1. Reduce concurrent access to the datastore.
 	// 2. Ensure consistent data during the scheduling operation of a request.
 	sCtx := types.NewContext(ctx, req, types.ToSchedulerPodMetrics(s.datastore.PodGetAll()))
 	loggerDebug.Info(fmt.Sprintf("Scheduling a request. Metrics: %+v", sCtx.PodsSnapshot))
@@ -197,7 +197,6 @@ func runScorersForPod(ctx *types.Context, scorers []types.Scorer, pod types.Pod)
 }
 
 type defaultPlugin struct {
-	plugins.NoopPlugin
 	plugins.RandomPicker
 }
 

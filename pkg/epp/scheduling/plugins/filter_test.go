@@ -40,7 +40,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "simple filter without successor, failure",
 			filter: &DecisionTreeFilter{
-				Current: &BasicFilter{
+				Current: &Filter{
 					name: "error",
 					filter: func(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
 						return nil, errors.New("filter error")

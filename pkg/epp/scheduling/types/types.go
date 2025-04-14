@@ -37,7 +37,7 @@ type LLMRequest struct {
 }
 
 func (r *LLMRequest) String() string {
-	return fmt.Sprintf("Model: %s, TargetModels: %v, ResolvedTargetModel: %s, Critical: %t, Prompt Size: %v", r.Model, r.TargetModels, r.ResolvedTargetModel, r.Critical, len(r.Prompt))
+	return fmt.Sprintf("Model: %s, TargetModels: %v, ResolvedTargetModel: %s, Critical: %t, PromptLength: %v", r.Model, r.TargetModels, r.ResolvedTargetModel, r.Critical, len(r.Prompt))
 }
 
 // Context holds contextual information during a scheduling operation.
