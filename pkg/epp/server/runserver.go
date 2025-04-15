@@ -146,7 +146,14 @@ func (r *ExtProcServerRunner) AsRunnable(logger logr.Logger) manager.Runnable {
 		} else {
 			srv = grpc.NewServer()
 		}
-		extProcServer := handlers.NewStreamingServer(scheduling.NewScheduler(r.Datastore), r.DestinationEndpointHintMetadataNamespace, r.DestinationEndpointHintKey, r.Datastore)
+
+		scheduler, err := scheduling.NewScheduler(ctx, r.Datastore)
+		if err != nil {
+			logger.Error(err, "Failed to create scheduler")
+			return err
+		}
+
+		extProcServer := handlers.NewStreamingServer(scheduler, r.DestinationEndpointHintMetadataNamespace, r.DestinationEndpointHintKey, r.Datastore)
 		extProcPb.RegisterExternalProcessorServer(
 			srv,
 			extProcServer,

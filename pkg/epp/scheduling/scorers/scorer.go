@@ -14,13 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package scheduling
+package scorers
 
 import (
+	"fmt"
 	"math/rand/v2"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
 type PodScore struct {
@@ -28,27 +29,31 @@ type PodScore struct {
 	Pod   *types.PodMetrics
 }
 
-// Scorer is the interface that scorers must implement
+// Scorer defines an interface for scoring pods.
 type Scorer interface {
 	ScoreTargets(ctx *types.Context, pods []*types.PodMetrics) ([]PodScore, error)
+	Name() string
 }
 
-// Scorer is the interface that scorers must implement
-type ScorerMng struct {
-	scorers []Scorer
+// ScorerManager manages a list of scorers and their use.
+type ScorerManager struct {
+	scorers map[Scorer]float64
 }
 
-func NewScorerMng() *ScorerMng {
-	return &ScorerMng{
-		scorers: make([]Scorer, 0),
+// NewScorerManager creates a new ScorerManager.
+func NewScorerManager() *ScorerManager {
+	return &ScorerManager{
+		scorers: make(map[Scorer]float64),
 	}
 }
 
-func (sm *ScorerMng) addScorer(scorer Scorer) {
-	sm.scorers = append(sm.scorers, scorer)
+// AddScorer adds a new scorer to the manager.
+func (mgr *ScorerManager) AddScorer(scorer Scorer, weight float64) {
+	mgr.scorers[scorer] = weight
 }
 
-func (sm *ScorerMng) scoreTargets(ctx *types.Context, pods []*types.PodMetrics) (*types.PodMetrics, error) {
+// ScoreTargets scores the target pods using all registered scorers.
+func (mgr *ScorerManager) ScoreTargets(ctx *types.Context, pods []*types.PodMetrics) (*types.PodMetrics, error) {
 	logger := log.FromContext(ctx)
 
 	podsTotalScore := make(map[*types.PodMetrics]float64)
@@ -59,15 +64,15 @@ func (sm *ScorerMng) scoreTargets(ctx *types.Context, pods []*types.PodMetrics) 
 	}
 
 	// add scores from all scorers
-	for _, scorer := range sm.scorers {
+	for scorer, weight := range mgr.scorers {
 		scoredPods, err := scorer.ScoreTargets(ctx, pods)
 		if err != nil {
-			logger.Info(">>> In scoreTargets, score targets returned error", "error", err)
-			return nil, err
+			logger.Error(err, "Error scoring pods", "scorer", scorer.Name())
+			return nil, fmt.Errorf("error scoring pods: %w", err)
 		}
 
 		for _, scoredPod := range scoredPods {
-			podsTotalScore[scoredPod.Pod] += scoredPod.Score
+			podsTotalScore[scoredPod.Pod] += weight * scoredPod.Score
 		}
 	}
 

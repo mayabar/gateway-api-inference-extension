@@ -20,9 +20,11 @@ package scheduling
 import (
 	"context"
 	"fmt"
+	"github.com/neuralmagic/distributed-kv-cache/pkg/kvcache"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/scorers"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
+
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 	envutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/env"
 	errutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/error"
@@ -114,28 +116,34 @@ var (
 	}
 )
 
-func NewScheduler(datastore Datastore) *Scheduler {
-	sMng := NewScorerMng()
-	sMng.addScorer(NewSessionAffinityScorer(1, datastore))
+func NewScheduler(ctx context.Context, datastore types.Datastore) (*Scheduler, error) {
+	sMgr := scorers.NewScorerManager()
+
+	// TODO: make scorers configuration
+
+	kvCacheAwareIndexerConfig := kvcache.NewDefaultConfig()
+	kvCacheAwareIndexerConfig.KVBlockIndexerConfig.RedisAddr = "vllm-p2p-lookup-server-service.default.svc.cluster.local:8100"
+	kvCacheAwareScorer, err := scorers.NewKVCacheAwareScorer(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create KVCacheAwareScorer: %w", err)
+	}
+
+	sMgr.AddScorer(scorers.NewSessionAffinityScorer(datastore), 1.0)
+	sMgr.AddScorer(kvCacheAwareScorer, 5.0)
 
 	return &Scheduler{
 		datastore:              datastore,
 		criticalRequestFilter:  lowLatencyFilter,
 		sheddableRequestFilter: sheddableRequestFilter,
-		scorerMng:              sMng,
-	}
+		scorerMng:              sMgr,
+	}, nil
 }
 
 type Scheduler struct {
-	datastore              Datastore
+	datastore              types.Datastore
 	criticalRequestFilter  Filter
 	sheddableRequestFilter Filter
-	scorerMng              *ScorerMng
-}
-
-type Datastore interface {
-	PodGetAll() []backendmetrics.PodMetrics
-	GetPodForSession(SessionID string) *backendmetrics.Pod
+	scorerMng              *scorers.ScorerManager
 }
 
 // Schedule finds the target pod based on metrics and the requested lora adapter.
@@ -160,7 +168,7 @@ func (s *Scheduler) Schedule(ctx context.Context, req *types.LLMRequest) (target
 		return nil, fmt.Errorf("failed to apply filter, resulted %v pods, this should never happen: %w", len(pods), err)
 	}
 
-	selectedPod, err := s.scorerMng.scoreTargets(sCtx, pods)
+	selectedPod, err := s.scorerMng.ScoreTargets(sCtx, pods)
 	if err != nil {
 		return nil, fmt.Errorf("failed to apply scorers: %w", err)
 	}

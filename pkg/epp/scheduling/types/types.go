@@ -34,6 +34,12 @@ type LLMRequest struct {
 	ResolvedTargetModel string
 	Critical            bool
 	SessionID           string
+	Prompt              string
+}
+
+type Datastore interface {
+	PodGetAll() []backendmetrics.PodMetrics
+	GetPodForSession(SessionID string) *backendmetrics.Pod
 }
 
 // Context holds contextual information during a scheduling operation.
