@@ -5,7 +5,7 @@ ARG BASE_IMAGE=gcr.io/distroless/static:nonroot
 
 ## Multistage build
 FROM ${BUILDER_IMAGE} AS builder
-ENV CGO_ENABLED=0
+ENV CGO_ENABLED=1
 ENV GOOS=linux
 ENV GOARCH=amd64
 
@@ -34,11 +34,11 @@ WORKDIR /src/cmd/epp
 
 COPY lib ./lib
 RUN ranlib lib/*.a
-ENV CGO_ENABLED=1
+
 RUN go build -v -o /epp -ldflags="-extldflags '-L$(pwd)/lib'"
 
 ## Multistage deploy
-FROM ${BASE_IMAGE}
+FROM ${BUILDER_IMAGE}
 
 WORKDIR /
 COPY --from=builder /epp /epp

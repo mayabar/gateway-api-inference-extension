@@ -20,7 +20,7 @@ package scheduling
 import (
 	"context"
 	"fmt"
-	"github.com/neuralmagic/distributed-kv-cache/pkg/kvcache"
+	"github.com/neuralmagic/kvcache-manager/pkg/kvcache"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/scorers"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -123,7 +123,7 @@ func NewScheduler(ctx context.Context, datastore types.Datastore) (*Scheduler, e
 
 	kvCacheAwareIndexerConfig := kvcache.NewDefaultConfig()
 	kvCacheAwareIndexerConfig.KVBlockIndexerConfig.RedisAddr = "vllm-p2p-lookup-server-service.default.svc.cluster.local:8100"
-	kvCacheAwareScorer, err := scorers.NewKVCacheAwareScorer(ctx, nil)
+	kvCacheAwareScorer, err := scorers.NewKVCacheAwareScorer(ctx, kvCacheAwareIndexerConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KVCacheAwareScorer: %w", err)
 	}

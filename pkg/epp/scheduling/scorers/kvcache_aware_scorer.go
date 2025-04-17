@@ -3,7 +3,7 @@ package scorers
 import (
 	"context"
 	"fmt"
-	"github.com/neuralmagic/distributed-kv-cache/pkg/kvcache"
+	"github.com/neuralmagic/kvcache-manager/pkg/kvcache"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -71,6 +71,8 @@ func (s *KVCacheAwareScorer) ScoreTargets(ctx *types.Context, pods []*types.PodM
 		})
 	}
 
+	fmt.Printf("KVCacheAwareScorer: %s, prompt: %s, model: %s, pod scores: %v\n",
+		s.Name(), ctx.Req.Prompt, ctx.Req.Model, scoredPods)
 	return scoredPods, nil
 }
 

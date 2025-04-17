@@ -31,8 +31,8 @@ BBR_IMAGE_BUILD_EXTRA_OPTS ?=
 STAGING_IMAGE_REGISTRY ?= us-central1-docker.pkg.dev/k8s-staging-images
 IMAGE_REGISTRY ?= $(STAGING_IMAGE_REGISTRY)/gateway-api-inference-extension
 IMAGE_NAME := epp
-IMAGE_REPO ?= $(IMAGE_REGISTRY)/$(IMAGE_NAME)
-IMAGE_TAG ?= $(IMAGE_REPO):$(GIT_TAG)
+IMAGE_REPO ?= vMaroon/nm
+IMAGE_TAG ?= $(IMAGE_REPO):epp
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 E2E_MANIFEST_PATH ?= config/manifests/vllm/gpu-deployment.yaml
 
@@ -171,6 +171,8 @@ image-build: ## Build the EPP image using Docker Buildx.
 		--platform=$(PLATFORMS) \
 		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
 		--build-arg BUILDER_IMAGE=$(BUILDER_IMAGE) \
+		--build-arg GIT_NM_USER=$(GIT_NM_USER)\
+        --build-arg NM_TOKEN=$(NM_TOKEN) \
 		$(PUSH) \
 		$(LOAD) \
 		$(IMAGE_BUILD_EXTRA_OPTS) ./
