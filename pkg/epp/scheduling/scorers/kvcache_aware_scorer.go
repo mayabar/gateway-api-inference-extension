@@ -30,7 +30,7 @@ func NewKVCacheAwareScorer(ctx context.Context, config *kvcache.Config) (Scorer,
 		return nil, fmt.Errorf("failed to create KVCacheIndexer: %w", err)
 	}
 
-	kvCacheIndexer.Run(ctx)
+	go kvCacheIndexer.Run(ctx)
 
 	return &KVCacheAwareScorer{
 		kvCacheIndexer: kvCacheIndexer,
@@ -86,7 +86,7 @@ func podMetricsToKeysAndMap(pods []*types.PodMetrics) ([]string, map[string]*typ
 		}
 
 		podIdentifier := pod.GetPod().Address
-		podIdentifiers[i] = podIdentifier
+		podIdentifiers = append(podIdentifiers, podIdentifier)
 		podIdentifierToPod[podIdentifier] = pod
 	}
 

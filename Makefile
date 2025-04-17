@@ -31,8 +31,8 @@ BBR_IMAGE_BUILD_EXTRA_OPTS ?=
 STAGING_IMAGE_REGISTRY ?= us-central1-docker.pkg.dev/k8s-staging-images
 IMAGE_REGISTRY ?= $(STAGING_IMAGE_REGISTRY)/gateway-api-inference-extension
 IMAGE_NAME := epp
-IMAGE_REPO ?= vMaroon/nm
-IMAGE_TAG ?= $(IMAGE_REPO):epp
+IMAGE_REPO ?= $(IMAGE_REGISTRY)/$(IMAGE_NAME)
+IMAGE_TAG ?= $(IMAGE_REPO):$(GIT_TAG)
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 E2E_MANIFEST_PATH ?= config/manifests/vllm/gpu-deployment.yaml
 
