@@ -80,7 +80,7 @@ func podMetricsToKeysAndMap(pods []*types.PodMetrics) ([]string, map[string]*typ
 	podIdentifiers := make([]string, 0, len(pods))
 	podIdentifierToPod := make(map[string]*types.PodMetrics, len(pods))
 
-	for i, pod := range pods {
+	for _, pod := range pods {
 		if pod == nil {
 			continue
 		}
