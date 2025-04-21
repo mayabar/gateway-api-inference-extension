@@ -65,16 +65,14 @@ var (
 	}
 )
 
-func NewScheduler(datastore Datastore) *Scheduler {
-	defaultPlugin := &defaultPlugin{}
-
+func NewScheduler(datastore Datastore, picker types.Picker) *Scheduler {
 	return &Scheduler{
 		datastore:           datastore,
 		preSchedulePlugins:  []types.PreSchedule{},
 		postSchedulePlugins: []types.PostSchedule{},
 		scorers:             []types.Scorer{},
-		filters:             []types.Filter{defaultPlugin},
-		picker:              defaultPlugin,
+		filters:             []types.Filter{},
+		picker:              picker,
 	}
 }
 
@@ -85,6 +83,14 @@ type Scheduler struct {
 	filters             []types.Filter
 	scorers             []types.Scorer
 	picker              types.Picker
+}
+
+func (s *Scheduler) RegisterScorer(scorer types.Scorer) {
+	s.scorers = append(s.scorers, scorer)
+}
+
+func (s *Scheduler) RegisterFilter(filter types.Filter) {
+	s.filters = append(s.filters, filter)
 }
 
 type Datastore interface {
@@ -196,15 +202,15 @@ func runScorersForPod(ctx *types.Context, scorers []types.Scorer, pod types.Pod)
 	return score, nil
 }
 
-type defaultPlugin struct {
+type DefaultPlugin struct {
 	plugins.RandomPicker
 }
 
-func (p *defaultPlugin) Name() string {
+func (p *DefaultPlugin) Name() string {
 	return "DefaultPlugin"
 }
 
-func (p *defaultPlugin) Filter(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
+func (p *DefaultPlugin) Filter(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
 	req := ctx.Req
 	var filter types.Filter
 	if req.Critical {
