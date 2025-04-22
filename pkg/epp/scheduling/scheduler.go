@@ -20,6 +20,7 @@ package scheduling
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -65,14 +66,14 @@ var (
 	}
 )
 
-func NewScheduler(datastore Datastore, picker types.Picker) *Scheduler {
+func NewScheduler(datastore Datastore) *Scheduler {
 	return &Scheduler{
 		datastore:           datastore,
 		preSchedulePlugins:  []types.PreSchedule{},
 		postSchedulePlugins: []types.PostSchedule{},
 		scorers:             []types.Scorer{},
 		filters:             []types.Filter{},
-		picker:              picker,
+		picker:              &defaultPlugin{},
 	}
 }
 
@@ -202,15 +203,15 @@ func runScorersForPod(ctx *types.Context, scorers []types.Scorer, pod types.Pod)
 	return score, nil
 }
 
-type DefaultPlugin struct {
+type defaultPlugin struct {
 	plugins.RandomPicker
 }
 
-func (p *DefaultPlugin) Name() string {
+func (p *defaultPlugin) Name() string {
 	return "DefaultPlugin"
 }
 
-func (p *DefaultPlugin) Filter(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
+func (p *defaultPlugin) Filter(ctx *types.Context, pods []types.Pod) ([]types.Pod, error) {
 	req := ctx.Req
 	var filter types.Filter
 	if req.Critical {
@@ -219,4 +220,8 @@ func (p *DefaultPlugin) Filter(ctx *types.Context, pods []types.Pod) ([]types.Po
 		filter = sheddableRequestFilter
 	}
 	return filter.Filter(ctx, pods)
+}
+
+func (p *defaultPlugin) Score(ctx *types.Context, pod types.Pod) (float64, error) {
+	return rand.Float64(), nil
 }
