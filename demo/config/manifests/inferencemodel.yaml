@@ -1,0 +1,46 @@
+apiVersion: inference.networking.x-k8s.io/v1alpha2
+kind: InferenceModel
+metadata:
+  name: food-review
+  namespace: kvcache-manager
+spec:
+  modelName: food-review
+  criticality: Standard
+  poolRef:
+    name: vllm-llama3-8b-instruct
+  targetModels:
+  - name: food-review-1
+    weight: 100
+---
+apiVersion: inference.networking.x-k8s.io/v1alpha2
+kind: InferenceModel
+metadata:
+  name: base-model
+  namespace: kvcache-manager
+spec:
+  modelName: meta-llama/Llama-3.1-8B-Instruct
+  criticality: Critical
+  poolRef:
+    name: vllm-llama3-8b-instruct
+---
+apiVersion: inference.networking.x-k8s.io/v1alpha2
+kind: InferenceModel
+metadata:
+  name: base-model-cpu
+  namespace: kvcache-manager
+spec:
+  modelName: Qwen/Qwen2.5-1.5B-Instruct
+  criticality: Critical
+  poolRef:
+    name: vllm-llama3-8b-instruct
+---
+apiVersion: inference.networking.x-k8s.io/v1alpha2
+kind: InferenceModel
+metadata:
+  name: mistarli
+  namespace: kvcache-manager
+spec:
+  modelName: mistralai/Mistral-7B-Instruct-v0.2
+  criticality: Critical
+  poolRef:
+    name: vllm-llama3-8b-instruct
