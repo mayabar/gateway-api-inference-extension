@@ -35,7 +35,7 @@ func (p *RandomPicker) Name() string {
 }
 
 func (p *RandomPicker) Pick(ctx *types.SchedulingContext, scoredPods []*types.ScoredPod) *types.Result {
-	ctx.Logger.V(logutil.DEBUG).Info(fmt.Sprintf("Selecting a random pod from %d candidates: %+v", len(scoredPods), scoredPods))
 	i := rand.Intn(len(scoredPods))
+	ctx.Logger.V(logutil.DEBUG).Info(fmt.Sprintf("Selecting a random pod from %d candidates: %+v\nSelected pod %d", len(scoredPods), scoredPods, i))
 	return &types.Result{TargetPod: scoredPods[i]}
 }

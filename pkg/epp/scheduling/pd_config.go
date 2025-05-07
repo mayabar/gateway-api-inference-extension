@@ -31,7 +31,7 @@ var prefillConfig = &SchedulerConfig{
 	preSchedulePlugins:  []plugins.PreSchedule{},
 	filters:             []plugins.Filter{filter.PrefillFilter},
 	scorers:             map[plugins.Scorer]int{},
-	picker:              picker.NewMaxScorePicker(),
+	picker:              picker.NewLRUPicker(),
 	postSchedulePlugins: []plugins.PostSchedule{},
 	postResponsePlugins: []plugins.PostResponse{},
 }
@@ -39,7 +39,7 @@ var decodeConfig = &SchedulerConfig{
 	preSchedulePlugins:  []plugins.PreSchedule{},
 	filters:             []plugins.Filter{filter.DecodeFilter},
 	scorers:             map[plugins.Scorer]int{},
-	picker:              picker.NewMaxScorePicker(),
+	picker:              picker.NewLRUPicker(),
 	postSchedulePlugins: []plugins.PostSchedule{},
 	postResponsePlugins: []plugins.PostResponse{},
 }
@@ -61,6 +61,7 @@ func init() {
 	// update default config if pd is enabled
 	if PDEnabled {
 		defaultConfig.filters = append(defaultConfig.filters, filter.DecodeFilter)
+		defaultConfig.picker = picker.NewLRUPicker()
 	}
 }
 
